@@ -624,6 +624,61 @@ in
 <h2 id="page4">Page 4 &mdash; Performance &amp; Talent</h2>
 <span class="page-badge">DASHBOARD PAGE 4</span>
 
+<div class="warn">The three measures below — High Performer Count, Promotion Ready, and Promotion Eligible % — must be updated before you build this page. The original versions used COUNTROWS which counts review records, not people. An employee who scored 4 in three separate years would be counted three times. The corrected versions below use DISTINCTCOUNT and anchor to the most recent review year only. Open each measure in the formula bar and replace it.</div>
+
+<h3>Corrected DAX Measures for Page 4</h3>
+
+<h4>High Performer Count (corrected)</h4>
+<div class="dax-block">
+  <div class="label">Replace existing measure</div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre>High Performer Count =
+<span class="kw">VAR</span> LastYear = <span class="fn">MAXX</span>(<span class="ref">Performance</span>, <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]))
+<span class="kw">RETURN</span>
+<span class="fn">CALCULATE</span>(
+    <span class="fn">DISTINCTCOUNT</span>(<span class="ref">Performance</span>[EmployeeID]),
+    <span class="ref">Performance</span>[Rating] >= <span class="num">4</span>,
+    <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]) = LastYear
+)</pre>
+</div>
+
+<h4>Promotion Ready (corrected)</h4>
+<div class="dax-block">
+  <div class="label">Replace existing measure</div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre>Promotion Ready =
+<span class="kw">VAR</span> LastYear = <span class="fn">MAXX</span>(<span class="ref">Performance</span>, <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]))
+<span class="kw">RETURN</span>
+<span class="fn">CALCULATE</span>(
+    <span class="fn">DISTINCTCOUNT</span>(<span class="ref">Performance</span>[EmployeeID]),
+    <span class="ref">Performance</span>[Rating] >= <span class="num">4</span>,
+    <span class="ref">Performance</span>[PromotionEligible] = <span class="str">"Yes"</span>,
+    <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]) = LastYear
+)</pre>
+</div>
+
+<h4>Promotion Eligible % (corrected)</h4>
+<div class="dax-block">
+  <div class="label">Replace existing measure</div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre>Promotion Eligible % =
+<span class="kw">VAR</span> LastYear = <span class="fn">MAXX</span>(<span class="ref">Performance</span>, <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]))
+<span class="kw">RETURN</span>
+<span class="fn">DIVIDE</span>(
+    <span class="fn">CALCULATE</span>(
+        <span class="fn">DISTINCTCOUNT</span>(<span class="ref">Performance</span>[EmployeeID]),
+        <span class="ref">Performance</span>[PromotionEligible] = <span class="str">"Yes"</span>,
+        <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]) = LastYear
+    ),
+    <span class="fn">CALCULATE</span>(
+        <span class="fn">DISTINCTCOUNT</span>(<span class="ref">Performance</span>[EmployeeID]),
+        <span class="fn">YEAR</span>(<span class="ref">Performance</span>[ReviewDate]) = LastYear
+    ),
+    <span class="num">0</span>
+)</pre>
+</div>
+<div class="info">MAXX(Performance, YEAR(Performance[ReviewDate])) finds the highest year in your data (2024) and uses that as the anchor. This means the measures always reflect the most recent review cycle, and will continue to work correctly if you extend the dataset in future.</div>
+
 <div class="build-visual">
   <div class="viztype-badge">Card Visual</div>
   <h4>Visuals 1, 2, 3 &mdash; Three Performance KPI Cards</h4>
@@ -667,7 +722,7 @@ in
 <div class="build-visual">
   <div class="viztype-badge">Table Visual</div>
   <h4>Visual 6 &mdash; Promotion Pipeline Table</h4>
-  <p>Lists every high performer who is also marked eligible for promotion — your talent pipeline.</p>
+  <p>Lists every high performer who is also marked eligible for promotion — your talent pipeline. Three filters are required to make this table show one clean row per person.</p>
   <ol class="steps">
     <li>Click the Table icon, drag these columns into the <strong>Columns</strong> well:</li>
   </ol>
@@ -680,10 +735,18 @@ in
     <tr><td>PromotionEligible</td><td>Performance</td></tr>
   </table>
   <ol class="steps" style="counter-reset: step 2;">
-    <li>Filters pane &rarr; Filters on this visual &rarr; drag <strong>Rating</strong> &rarr; set filter type to <strong>is greater than or equal to</strong> &rarr; type <strong>4</strong></li>
-    <li>Also filter <strong>PromotionEligible</strong> &rarr; is &rarr; <strong>Yes</strong></li>
+    <li>Filters pane &rarr; <strong>Filters on this visual</strong> &rarr; drag <strong>Rating</strong> &rarr; set filter type to <strong>is greater than or equal to</strong> &rarr; type <strong>4</strong></li>
+    <li>Drag <strong>PromotionEligible</strong> into the same Filters on this visual section &rarr; set to <strong>Yes</strong></li>
+    <li>Drag <strong>ReviewDate</strong> into the same Filters on this visual section &rarr; change filter type to <strong>is</strong> &rarr; select <strong>2024</strong> (the most recent year in the data)</li>
     <li>Title: "Promotion Pipeline"</li>
   </ol>
+  <div class="warn">All three filters are required. Here is why each one matters:
+    <ul style="margin-top:8px; padding-left:18px;">
+      <li><strong>Rating &gt;= 4</strong> — removes low and average performers</li>
+      <li><strong>PromotionEligible = Yes</strong> — removes high performers whose manager did not flag them as ready. Without this, people with Rating 4 but PromotionEligible = No will appear in the table.</li>
+      <li><strong>ReviewDate year = 2024</strong> — the Performance table has one row per employee per year. Without this filter, the same person appears multiple times (once per review year they qualified). Locking to 2024 gives you one row per person showing only their most recent review.</li>
+    </ul>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════ PAGE 5 BUILD -->
